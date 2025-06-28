@@ -10,5 +10,8 @@ node_modules/
 # Logs
 *.log
 
+# Temporary files
+coverage/
+
 # OS generated files
 .DS_Store

@@ -12,7 +12,7 @@ describe('Currency Conversion', () => {
   describe('Supported Currency Pairs', () => {
     test('converts USD to EUR', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=USD&to=EUR&amount=100')
+        .get('/api/2025-06/convert?from=USD&to=EUR&amount=100')
         .set(validHeaders);
       
       if (response.status === 200) {
@@ -26,7 +26,7 @@ describe('Currency Conversion', () => {
 
     test('converts BTC to USD', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=BTC&to=USD&amount=0.1')
+        .get('/api/2025-06/convert?from=BTC&to=USD&amount=0.1')
         .set(validHeaders);
       
       if (response.status === 200) {
@@ -38,7 +38,7 @@ describe('Currency Conversion', () => {
 
     test('converts ETH to BTC', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=ETH&to=BTC&amount=1')
+        .get('/api/2025-06/convert?from=ETH&to=BTC&amount=1')
         .set(validHeaders);
       
       if (response.status === 200) {
@@ -62,7 +62,7 @@ describe('Currency Conversion', () => {
   describe('Input Validation', () => {
     test('rejects unsupported currencies', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=JPY&to=USD&amount=100')
+        .get('/api/2025-06/convert?from=JPY&to=USD&amount=100')
         .set(validHeaders);
       
       expect(response.status).toBe(400);
@@ -71,7 +71,7 @@ describe('Currency Conversion', () => {
 
     test('rejects missing parameters', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=USD&amount=100')
+        .get('/api/2025-06/convert?from=USD&amount=100')
         .set(validHeaders);
       
       expect(response.status).toBe(400);
@@ -80,7 +80,7 @@ describe('Currency Conversion', () => {
 
     test('rejects invalid amount', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=USD&to=EUR&amount=notanumber')
+        .get('/api/2025-06/convert?from=USD&to=EUR&amount=notanumber')
         .set(validHeaders);
       
       expect(response.status).toBe(400);
@@ -89,7 +89,7 @@ describe('Currency Conversion', () => {
 
     test('rejects negative amount', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=USD&to=EUR&amount=-50')
+        .get('/api/2025-06/convert?from=USD&to=EUR&amount=-50')
         .set(validHeaders);
       
       expect(response.status).toBe(400);
@@ -98,7 +98,7 @@ describe('Currency Conversion', () => {
 
     test('rejects zero amount', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=USD&to=EUR&amount=0')
+        .get('/api/2025-06/convert?from=USD&to=EUR&amount=0')
         .set(validHeaders);
       
       expect(response.status).toBe(400);
@@ -109,7 +109,7 @@ describe('Currency Conversion', () => {
   describe('Decimal Precision', () => {
     test('handles decimal amounts correctly', async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=BTC&to=USD&amount=0.00123456')
+        .get('/api/2025-06/convert?from=BTC&to=USD&amount=0.00123456')
         .set(validHeaders);
       
       if (response.status === 200) {

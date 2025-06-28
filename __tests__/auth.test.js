@@ -1,56 +1,57 @@
-import request from 'supertest';
-import app from '../server.js';
+import request from "supertest";
+import app from "../server.js";
 
-describe('Authentication', () => {
+describe("Authentication", () => {
   afterAll(async () => {
     // Allow graceful shutdown
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   });
 
-  describe('Valid Authentication', () => {
-    test('accepts valid Bearer token', async () => {
+  describe("Valid Authentication", () => {
+    test("accepts valid Bearer token", async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=BTC&to=USD&amount=1')
-        .set('Authorization', 'Bearer test-api-key-12345');
-      
+        .get("/api/2025-06/convert?from=BTC&to=USD&amount=1")
+        .set("Authorization", "Bearer test-api-key-12345");
+
       expect(response.status).not.toBe(401);
     });
   });
 
-  describe('Invalid Authentication', () => {
-    test('rejects missing Authorization header', async () => {
-      const response = await request(app)
-        .get('/api/v1/convert?from=BTC&to=USD&amount=1');
-      
+  describe("Invalid Authentication", () => {
+    test("rejects missing Authorization header", async () => {
+      const response = await request(app).get(
+        "/api/2025-06/convert?from=BTC&to=USD&amount=1"
+      );
+
       expect(response.status).toBe(401);
-      expect(response.body.error.code).toBe('MISSING_AUTHORIZATION');
+      expect(response.body.error.code).toBe("MISSING_AUTHORIZATION");
     });
 
-    test('rejects malformed Bearer token', async () => {
+    test("rejects malformed Bearer token", async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=BTC&to=USD&amount=1')
-        .set('Authorization', 'InvalidFormat test-api-key-12345');
-      
+        .get("/api/2025-06/convert?from=BTC&to=USD&amount=1")
+        .set("Authorization", "InvalidFormat test-api-key-12345");
+
       expect(response.status).toBe(401);
-      expect(response.body.error.code).toBe('INVALID_AUTH_FORMAT');
+      expect(response.body.error.code).toBe("INVALID_AUTH_FORMAT");
     });
 
-    test('rejects missing API key', async () => {
+    test("rejects missing API key", async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=BTC&to=USD&amount=1')
-        .set('Authorization', 'Bearer');
-      
+        .get("/api/2025-06/convert?from=BTC&to=USD&amount=1")
+        .set("Authorization", "Bearer");
+
       expect(response.status).toBe(401);
-      expect(response.body.error.code).toBe('INVALID_AUTH_FORMAT');
+      expect(response.body.error.code).toBe("INVALID_AUTH_FORMAT");
     });
 
-    test('rejects invalid API key', async () => {
+    test("rejects invalid API key", async () => {
       const response = await request(app)
-        .get('/api/v1/convert?from=BTC&to=USD&amount=1')
-        .set('Authorization', 'Bearer invalid-key');
-      
+        .get("/api/2025-06/convert?from=BTC&to=USD&amount=1")
+        .set("Authorization", "Bearer invalid-key");
+
       expect(response.status).toBe(401);
-      expect(response.body.error.code).toBe('INVALID_API_KEY');
+      expect(response.body.error.code).toBe("INVALID_API_KEY");
     });
   });
 });

@@ -1,15 +1,19 @@
-import Database from 'better-sqlite3';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import Database from "better-sqlite3";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const databasePath = join(__dirname, 'currency_conversion.db');
+const databasePath = join(__dirname, "currency_conversion.db");
 const currencyDatabase = new Database(databasePath);
 
 // Only prepare statements after database is initialized
-let getCurrentUsageStatement, incrementRequestCountStatement, createNewDayRecordStatement, logRequestStatement, getUserByApiKeyStatement;
+let getCurrentUsageStatement,
+  incrementRequestCountStatement,
+  createNewDayRecordStatement,
+  logRequestStatement,
+  getUserByApiKeyStatement;
 
 const initializeDatabase = () => {
   currencyDatabase.exec(`
@@ -55,13 +59,13 @@ const initializeDatabase = () => {
   `);
 
   seedTestUser.run(
-    'dab458d6-8352-42e6-88a1-88acc76b4e43',
-    'Test User',
-    'test@example.com',
-    'test-api-key-12345'
+    "dab458d6-8352-42e6-88a1-88acc76b4e43",
+    "Test User",
+    "test@example.com",
+    "test-api-key-12345"
   );
 
-  console.log('Database initialized successfully');
+  console.log("Database initialized successfully");
 
   // Prepare statements after tables are created
   getCurrentUsageStatement = currencyDatabase.prepare(`
@@ -91,28 +95,43 @@ const initializeDatabase = () => {
   `);
 };
 
-const checkAndIncrementRateLimit = currencyDatabase.transaction((authenticatedUserId, currentDateUTC, isWeekendDay) => {
-  const dailyRequestLimit = isWeekendDay ? 200 : 100;
-  
-  const currentUsageRecord = getCurrentUsageStatement.get(authenticatedUserId, currentDateUTC);
-  
-  if (!currentUsageRecord) {
-    createNewDayRecordStatement.run(authenticatedUserId, currentDateUTC, isWeekendDay ? 1 : 0);
-    return { allowed: true, currentCount: 1 };
+import { getRateLimits } from './config/environment.js';
+
+const checkAndIncrementRateLimit = currencyDatabase.transaction(
+  (authenticatedUserId, currentDateUTC, isWeekendDay) => {
+    const rateLimits = getRateLimits();
+    const dailyRequestLimit = isWeekendDay ? rateLimits.weekend : rateLimits.weekday;
+
+    const currentUsageRecord = getCurrentUsageStatement.get(
+      authenticatedUserId,
+      currentDateUTC
+    );
+
+    if (!currentUsageRecord) {
+      createNewDayRecordStatement.run(
+        authenticatedUserId,
+        currentDateUTC,
+        isWeekendDay ? 1 : 0
+      );
+      return { allowed: true, currentCount: 1 };
+    }
+
+    if (currentUsageRecord.request_count >= dailyRequestLimit) {
+      throw new Error(`Daily request limit of ${dailyRequestLimit} exceeded`);
+    }
+
+    incrementRequestCountStatement.run(authenticatedUserId, currentDateUTC);
+    return {
+      allowed: true,
+      currentCount: currentUsageRecord.request_count + 1,
+    };
   }
-  
-  if (currentUsageRecord.request_count >= dailyRequestLimit) {
-    throw new Error(`Daily request limit of ${dailyRequestLimit} exceeded`);
-  }
-  
-  incrementRequestCountStatement.run(authenticatedUserId, currentDateUTC);
-  return { allowed: true, currentCount: currentUsageRecord.request_count + 1 };
-});
+);
 
 export {
   currencyDatabase,
   initializeDatabase,
   checkAndIncrementRateLimit,
   logRequestStatement,
-  getUserByApiKeyStatement
+  getUserByApiKeyStatement,
 };

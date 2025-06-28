@@ -1,4 +1,5 @@
 import { checkAndIncrementRateLimit } from '../database.js';
+import { getRateLimits } from '../config/environment.js';
 
 const rateLimitMiddleware = (req, res, next) => {
   try {
@@ -9,9 +10,12 @@ const rateLimitMiddleware = (req, res, next) => {
 
     const rateLimitResult = checkAndIncrementRateLimit(authenticatedUserId, currentDateUTC, isWeekendDay);
 
+    const rateLimits = getRateLimits();
+    const dailyLimit = isWeekendDay ? rateLimits.weekend : rateLimits.weekday;
+
     req.rateLimitInfo = {
       currentCount: rateLimitResult.currentCount,
-      dailyLimit: isWeekendDay ? 200 : 100,
+      dailyLimit: dailyLimit,
       isWeekend: isWeekendDay
     };
 
@@ -21,7 +25,8 @@ const rateLimitMiddleware = (req, res, next) => {
     if (error.message.includes('Daily request limit')) {
       const currentDay = new Date().getDay();
       const isWeekendDay = currentDay === 0 || currentDay === 6;
-      const dailyLimit = isWeekendDay ? 200 : 100;
+      const rateLimits = getRateLimits();
+      const dailyLimit = isWeekendDay ? rateLimits.weekend : rateLimits.weekday;
 
       return res.status(429).json({
         success: false,
