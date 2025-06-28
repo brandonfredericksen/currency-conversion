@@ -119,13 +119,5 @@ Authentication → Rate Limiting → Request Logging → Business Logic
 
 I included two essential security middleware packages:
 
-**Helmet** sets various HTTP headers to help protect against common vulnerabilities:
-- **XSS Protection** - Prevents cross-site scripting attacks
-- **Content Security Policy** - Controls resource loading to prevent injection attacks
-- **HSTS** - Enforces HTTPS connections
-- **Frame Options** - Prevents clickjacking attacks
-
-**CORS** (Cross-Origin Resource Sharing) controls which domains can access the API:
-- **Development flexibility** - Allows frontend applications to consume the API
-- **Production security** - Can be configured to only allow specific origins
-- **Preflight handling** - Properly handles OPTIONS requests for complex requests
+**Helmet** sets various HTTP headers to help protect against common vulnerabilities.
+**CORS** (Cross-Origin Resource Sharing) controls which domains can access the API.
