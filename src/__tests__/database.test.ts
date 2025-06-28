@@ -38,15 +38,7 @@ describe('Database Operations', () => {
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
 
-      CREATE TABLE rate_limits (
-        user_id TEXT NOT NULL,
-        date TEXT NOT NULL,
-        request_count INTEGER DEFAULT 0,
-        is_weekend BOOLEAN NOT NULL,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (user_id, date),
-        FOREIGN KEY (user_id) REFERENCES users(id)
-      );
+      CREATE INDEX IF NOT EXISTS idx_requests_user_timestamp ON requests(user_id, timestamp);
     `);
     
     // Seed test user
@@ -113,41 +105,20 @@ describe('Database Operations', () => {
   });
 
   describe('Rate Limiting', () => {
-    test('creates new rate limit record', () => {
-      const createStmt = testDb.prepare(`
-        INSERT INTO rate_limits (user_id, date, request_count, is_weekend) 
-        VALUES (?, ?, 1, ?)
+    test('counts requests for rate limiting', () => {
+      // Insert two requests for the same day
+      const logStmt = testDb.prepare(`
+        INSERT INTO requests (user_id, from_currency, to_currency, amount, converted_amount, exchange_rate, response_body, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
-      
-      const result = createStmt.run(testUser.userId, '2024-01-15', 0); // Use 0 instead of false
-      
-      expect(result.changes).toBe(1);
-    });
+      const date = '2024-01-15';
+      logStmt.run(testUser.userId, 'BTC', 'USD', 0.1, 4260.00, 42600.00, JSON.stringify({ success: true }), `${date}T10:00:00.000Z`);
+      logStmt.run(testUser.userId, 'BTC', 'USD', 0.2, 8520.00, 42600.00, JSON.stringify({ success: true }), `${date}T12:00:00.000Z`);
 
-    test('increments existing rate limit record', () => {
-      const incrementStmt = testDb.prepare(`
-        UPDATE rate_limits 
-        SET request_count = request_count + 1, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ? AND date = ?
-      `);
-      
-      const result = incrementStmt.run(testUser.userId, '2024-01-15');
-      
-      expect(result.changes).toBe(1);
-    });
-
-    test('retrieves current usage', () => {
-      const getUsageStmt = testDb.prepare(`
-        SELECT request_count, is_weekend 
-        FROM rate_limits 
-        WHERE user_id = ? AND date = ?
-      `);
-      
-      const usage = getUsageStmt.get(testUser.userId, '2024-01-15') as any;
-      
-      expect(usage).toBeDefined();
-      expect(usage.request_count).toBe(2); // 1 initial + 1 increment
-      expect(usage.is_weekend).toBe(0); // false
+      // Count requests for that day
+      const countStmt = testDb.prepare('SELECT COUNT(*) as request_count FROM requests WHERE user_id = ? AND DATE(timestamp) = ?');
+      const result = countStmt.get(testUser.userId, date) as any;
+      expect(result.request_count).toBe(2);
     });
   });
 

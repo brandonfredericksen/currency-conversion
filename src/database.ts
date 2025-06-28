@@ -11,16 +11,11 @@ const databasePath = join(__dirname, "../currency_conversion.db");
 const currencyDatabase: Database.Database = new Database(databasePath);
 
 // Type definitions for prepared statements
-type GetCurrentUsageStatement = Database.Statement<[string, string]>;
-type IncrementRequestCountStatement = Database.Statement<[string, string]>;
-type CreateNewDayRecordStatement = Database.Statement<[string, string, number]>;
-type LogRequestStatement = Database.Statement<[string, string, string, number, number, number, string]>;
+type LogRequestStatement = Database.Statement<[
+  string, string, string, number, number, number, string
+]>;
 type GetUserByApiKeyStatement = Database.Statement<[string]>;
 
-// Only prepare statements after database is initialized
-let getCurrentUsageStatement: GetCurrentUsageStatement;
-let incrementRequestCountStatement: IncrementRequestCountStatement;
-let createNewDayRecordStatement: CreateNewDayRecordStatement;
 let logRequestStatement: LogRequestStatement;
 let getUserByApiKeyStatement: GetUserByApiKeyStatement;
 
@@ -48,18 +43,7 @@ export const initializeDatabase = (): void => {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
-    CREATE TABLE IF NOT EXISTS rate_limits (
-      user_id TEXT NOT NULL,
-      date TEXT NOT NULL,
-      request_count INTEGER DEFAULT 0,
-      is_weekend BOOLEAN NOT NULL,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (user_id, date),
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-
     CREATE INDEX IF NOT EXISTS idx_requests_user_timestamp ON requests(user_id, timestamp);
-    CREATE INDEX IF NOT EXISTS idx_rate_limits_date ON rate_limits(date);
   `);
 
   const seedUser = currencyDatabase.prepare(`
@@ -83,24 +67,6 @@ export const initializeDatabase = (): void => {
 
   console.log("Database initialized successfully");
 
-  // Prepare statements after tables are created
-  getCurrentUsageStatement = currencyDatabase.prepare(`
-    SELECT request_count, is_weekend 
-    FROM rate_limits 
-    WHERE user_id = ? AND date = ?
-  `) as GetCurrentUsageStatement;
-
-  incrementRequestCountStatement = currencyDatabase.prepare(`
-    UPDATE rate_limits 
-    SET request_count = request_count + 1, updated_at = CURRENT_TIMESTAMP
-    WHERE user_id = ? AND date = ?
-  `) as IncrementRequestCountStatement;
-
-  createNewDayRecordStatement = currencyDatabase.prepare(`
-    INSERT INTO rate_limits (user_id, date, request_count, is_weekend) 
-    VALUES (?, ?, 1, ?)
-  `) as CreateNewDayRecordStatement;
-
   logRequestStatement = currencyDatabase.prepare(`
     INSERT INTO requests (user_id, from_currency, to_currency, amount, converted_amount, exchange_rate, response_body)
     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -111,34 +77,26 @@ export const initializeDatabase = (): void => {
   `) as GetUserByApiKeyStatement;
 };
 
-
 export const checkAndIncrementRateLimit = currencyDatabase.transaction(
   (authenticatedUserId: string, currentDateUTC: string, isWeekendDay: boolean): RateLimitResult => {
     const rateLimits = getRateLimits();
     const dailyRequestLimit = isWeekendDay ? rateLimits.weekend : rateLimits.weekday;
 
-    const currentUsageRecord = getCurrentUsageStatement.get(
-      authenticatedUserId,
-      currentDateUTC
-    ) as { request_count: number; is_weekend: number } | undefined;
-
-    if (!currentUsageRecord) {
-      createNewDayRecordStatement.run(
-        authenticatedUserId,
-        currentDateUTC,
-        isWeekendDay ? 1 : 0
-      );
-      return { allowed: true, currentCount: 1 };
-    }
-
-    if (currentUsageRecord.request_count >= dailyRequestLimit) {
+    // Count requests for this user and date
+    const countStmt = currencyDatabase.prepare(`
+      SELECT COUNT(*) as request_count FROM requests WHERE user_id = ? AND DATE(timestamp) = ?
+    `);
+    const result = countStmt.get(authenticatedUserId, currentDateUTC) as { request_count: number };
+    const currentCount = result ? result.request_count : 0;
+      
+    if (currentCount >= dailyRequestLimit) {
       throw new Error(`Daily request limit of ${dailyRequestLimit} exceeded`);
     }
 
-    incrementRequestCountStatement.run(authenticatedUserId, currentDateUTC);
+    // Allow request, increment will happen when request is logged
     return {
       allowed: true,
-      currentCount: currentUsageRecord.request_count + 1,
+      currentCount: currentCount + 1,
     };
   }
 );

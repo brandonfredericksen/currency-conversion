@@ -37,6 +37,18 @@ npm start
 npm run dev
 ```
 
+### Environment Configuration
+
+Create an `.env` file (see `.env.example`):
+
+### Available API Keys
+
+For testing purposes, the following API keys are pre-seeded:
+
+- **Test User:** `550e8400-e29b-41d4-a716-446655440000`
+- **Trunk Tools:** `dab458d6-8352-42e6-88a1-88acc76b4e43`
+
+
 ### API Usage
 
 ```bash
@@ -60,17 +72,6 @@ curl -H "Authorization: Bearer <API_KEY>" \
   }
 }
 ```
-
-### Environment Configuration
-
-Create an `.env` file (see `.env.example`):
-
-### Available API Keys
-
-For testing purposes, the following API keys are pre-seeded:
-
-- **Test User:** `550e8400-e29b-41d4-a716-446655440000`
-- **Trunk Tools:** `dab458d6-8352-42e6-88a1-88acc76b4e43`
 
 ## Architecture Decisions
 

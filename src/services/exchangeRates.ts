@@ -26,10 +26,7 @@ export const getCachedOrFreshRates = async (baseCurrency: SupportedCurrency): Pr
   const cacheExpired =
     !exchangeRateCache.lastUpdated ||
     now - exchangeRateCache.lastUpdated > exchangeRateCache.cacheTimeoutMs;
-  console.log(
-    'exchangeRateCache.cacheTimeoutMs',
-    exchangeRateCache.cacheTimeoutMs
-  );
+
   if (cacheExpired) {
     try {
       const response = await fetch(
