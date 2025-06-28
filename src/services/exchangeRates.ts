@@ -1,5 +1,6 @@
-import { getSupportedCurrencies, getCacheTimeout } from '../config/environment.js';
 import { SupportedCurrency, ConversionResult } from '../types/index.js';
+import { SUPPORTED_CURRENCIES } from '../lib/const.js';
+import { getCacheTimeout } from '../config/environment.js';
 
 interface ExchangeRateCache {
   data: any | null;
@@ -17,7 +18,7 @@ interface CoinbaseExchangeRatesResponse {
 const exchangeRateCache: ExchangeRateCache = {
   data: null,
   lastUpdated: null,
-  cacheTimeoutMs: getCacheTimeout()
+  cacheTimeoutMs: getCacheTimeout(),
 };
 
 export const getCachedOrFreshRates = async (baseCurrency: SupportedCurrency): Promise<{ rates: any; lastUpdated: string }> => {
@@ -25,7 +26,10 @@ export const getCachedOrFreshRates = async (baseCurrency: SupportedCurrency): Pr
   const cacheExpired =
     !exchangeRateCache.lastUpdated ||
     now - exchangeRateCache.lastUpdated > exchangeRateCache.cacheTimeoutMs;
-
+  console.log(
+    'exchangeRateCache.cacheTimeoutMs',
+    exchangeRateCache.cacheTimeoutMs
+  );
   if (cacheExpired) {
     try {
       const response = await fetch(
@@ -72,7 +76,7 @@ export const convertCurrency = async (
   toCurrency: SupportedCurrency,
   amount: number
 ): Promise<ConversionResult> => {
-  const supportedCurrencies = getSupportedCurrencies();
+  const supportedCurrencies = Object.keys(SUPPORTED_CURRENCIES);
 
   if (
     !supportedCurrencies.includes(fromCurrency) ||
@@ -99,10 +103,11 @@ export const convertCurrency = async (
   }
 
   const convertedAmount = amount * exchangeRate;
+  const decimalPlaces = SUPPORTED_CURRENCIES[toCurrency] || 2;
 
   return {
-    convertedAmount: parseFloat(convertedAmount.toFixed(8)),
-    exchangeRate: parseFloat(exchangeRate.toFixed(8)),
+    convertedAmount: parseFloat(convertedAmount.toFixed(decimalPlaces)),
+    exchangeRate,
     rateLastUpdated: rateData.lastUpdated,
   };
 };

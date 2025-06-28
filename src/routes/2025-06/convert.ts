@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { convertCurrency } from '../../services/exchangeRates.js';
-import { getSupportedCurrencies } from '../../config/environment.js';
+import { SUPPORTED_CURRENCIES } from '../../lib/const.js';
 import { RateLimitedRequest, SupportedCurrency } from '../../types/index.js';
 
 export const convertRoute = async (req: RateLimitedRequest, res: Response): Promise<void> => {
@@ -59,7 +59,7 @@ export const convertRoute = async (req: RateLimitedRequest, res: Response): Prom
         success: false,
         error: {
           code: "UNSUPPORTED_CURRENCY",
-          message: `Supported currencies: ${getSupportedCurrencies().join(', ')}`,
+          message: `Supported currencies: ${Object.keys(SUPPORTED_CURRENCIES).join(', ')}`,
         },
       });
       return;

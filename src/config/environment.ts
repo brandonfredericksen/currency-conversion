@@ -1,12 +1,4 @@
-import { SupportedCurrency } from '../types/index.js';
-
-export const getSupportedCurrencies = (): SupportedCurrency[] => {
-  const envCurrencies = process.env.SUPPORTED_CURRENCIES;
-  if (envCurrencies) {
-    return envCurrencies.split(',').map(currency => currency.trim().toUpperCase()) as SupportedCurrency[];
-  }
-  return ['USD', 'EUR', 'BTC', 'ETH']; // Default fallback
-};
+import '../config/envLoader.js';
 
 export const getPort = (): number => {
   return parseInt(process.env.PORT || '3000');
