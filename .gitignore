@@ -7,11 +7,6 @@ node_modules/
 # Database
 *.db
 
-# Logs
-*.log
-
-# Temporary files
-coverage/
 
 # Build directories
 dist/
