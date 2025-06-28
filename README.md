@@ -31,26 +31,11 @@ npm install
 npm run dev
 ```
 
-### Running the Service
-
-```bash
-# Development mode (with auto-restart)
-npm run dev
-
-# Production mode
-npm start
-
-# Run tests
-npm test
-```
-
-The service will start on port 3000 by default.
-
 ### API Usage
 
 ```bash
 # Make a currency conversion request
-curl -H "Authorization: Bearer 550e8400-e29b-41d4-a716-446655440000" \
+curl -H "Authorization: Bearer <API_KEY>" \
   "http://localhost:3000/api/2025-06/convert?from=BTC&to=USD&amount=0.1"
 ```
 
@@ -72,15 +57,7 @@ curl -H "Authorization: Bearer 550e8400-e29b-41d4-a716-446655440000" \
 
 ### Environment Configuration
 
-Create a `.env` file (see `.env.example`):
-
-```bash
-PORT=3000
-SUPPORTED_CURRENCIES=USD,EUR,BTC,ETH
-CACHE_TIMEOUT_MS=30000
-WEEKDAY_RATE_LIMIT=100
-WEEKEND_RATE_LIMIT=200
-```
+Create an `.env` file (see `.env.example`):
 
 ### Available API Keys
 
@@ -131,3 +108,18 @@ I structured the middleware stack with clear separation of concerns:
 ```
 Authentication → Rate Limiting → Request Logging → Business Logic
 ```
+
+### Security: Helmet and CORS
+
+I included two essential security middleware packages:
+
+**Helmet** sets various HTTP headers to help protect against common vulnerabilities:
+- **XSS Protection** - Prevents cross-site scripting attacks
+- **Content Security Policy** - Controls resource loading to prevent injection attacks
+- **HSTS** - Enforces HTTPS connections
+- **Frame Options** - Prevents clickjacking attacks
+
+**CORS** (Cross-Origin Resource Sharing) controls which domains can access the API:
+- **Development flexibility** - Allows frontend applications to consume the API
+- **Production security** - Can be configured to only allow specific origins
+- **Preflight handling** - Properly handles OPTIONS requests for complex requests
