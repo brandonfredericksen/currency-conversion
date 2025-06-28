@@ -1,6 +1,6 @@
 # Currency Conversion Service
 
-A production-ready Node.js service for converting between fiat and cryptocurrency pairs. Built with Express, featuring real-time exchange rates, user authentication, rate limiting, and comprehensive request logging.
+A service for converting between fiat and cryptocurrency pairs. Built with Express, featuring real-time exchange rates, user authentication, rate limiting, and request logging.
 
 ## Features
 
