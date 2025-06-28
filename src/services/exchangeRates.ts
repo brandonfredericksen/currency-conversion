@@ -1,12 +1,26 @@
 import { getSupportedCurrencies, getCacheTimeout } from '../config/environment.js';
+import { SupportedCurrency, ConversionResult } from '../types/index.js';
 
-const exchangeRateCache = {
+interface ExchangeRateCache {
+  data: any | null;
+  lastUpdated: number | null;
+  cacheTimeoutMs: number;
+}
+
+interface CoinbaseExchangeRatesResponse {
+  data: {
+    currency: string;
+    rates: Record<string, string>;
+  };
+}
+
+const exchangeRateCache: ExchangeRateCache = {
   data: null,
   lastUpdated: null,
   cacheTimeoutMs: getCacheTimeout()
 };
 
-const getCachedOrFreshRates = async (baseCurrency) => {
+export const getCachedOrFreshRates = async (baseCurrency: SupportedCurrency): Promise<{ rates: any; lastUpdated: string }> => {
   const now = Date.now();
   const cacheExpired =
     !exchangeRateCache.lastUpdated ||
@@ -24,7 +38,7 @@ const getCachedOrFreshRates = async (baseCurrency) => {
         );
       }
 
-      const freshData = await response.json();
+      const freshData: CoinbaseExchangeRatesResponse = await response.json();
 
       if (!freshData.data || !freshData.data.rates) {
         throw new Error("Invalid response format from Coinbase API");
@@ -49,11 +63,15 @@ const getCachedOrFreshRates = async (baseCurrency) => {
 
   return {
     rates: exchangeRateCache.data,
-    lastUpdated: new Date(exchangeRateCache.lastUpdated).toISOString(),
+    lastUpdated: new Date(exchangeRateCache.lastUpdated!).toISOString(),
   };
 };
 
-const convertCurrency = async (fromCurrency, toCurrency, amount) => {
+export const convertCurrency = async (
+  fromCurrency: SupportedCurrency,
+  toCurrency: SupportedCurrency,
+  amount: number
+): Promise<ConversionResult> => {
   const supportedCurrencies = getSupportedCurrencies();
 
   if (
@@ -88,5 +106,3 @@ const convertCurrency = async (fromCurrency, toCurrency, amount) => {
     rateLastUpdated: rateData.lastUpdated,
   };
 };
-
-export { convertCurrency, getCachedOrFreshRates };

@@ -1,5 +1,5 @@
 import cors from "cors";
-import express from "express";
+import express, { Request, Response } from "express";
 import helmet from "helmet";
 import { getPort } from "./config/environment.js";
 import { initializeDatabase } from "./database.js";
@@ -25,7 +25,7 @@ app.get(
   convertRoute
 );
 
-app.get("/health", (_, res) => {
+app.get("/health", (_: Request, res: Response) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 

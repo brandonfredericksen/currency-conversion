@@ -1,21 +1,30 @@
 import Database from "better-sqlite3";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { getRateLimits } from './config/environment.js';
+import { RateLimitResult } from './types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const databasePath = join(__dirname, "currency_conversion.db");
-const currencyDatabase = new Database(databasePath);
+const databasePath = join(__dirname, "../currency_conversion.db");
+const currencyDatabase: Database.Database = new Database(databasePath);
+
+// Type definitions for prepared statements
+type GetCurrentUsageStatement = Database.Statement<[string, string]>;
+type IncrementRequestCountStatement = Database.Statement<[string, string]>;
+type CreateNewDayRecordStatement = Database.Statement<[string, string, number]>;
+type LogRequestStatement = Database.Statement<[string, string, string, number, number, number, string]>;
+type GetUserByApiKeyStatement = Database.Statement<[string]>;
 
 // Only prepare statements after database is initialized
-let getCurrentUsageStatement,
-  incrementRequestCountStatement,
-  createNewDayRecordStatement,
-  logRequestStatement,
-  getUserByApiKeyStatement;
+let getCurrentUsageStatement: GetCurrentUsageStatement;
+let incrementRequestCountStatement: IncrementRequestCountStatement;
+let createNewDayRecordStatement: CreateNewDayRecordStatement;
+let logRequestStatement: LogRequestStatement;
+let getUserByApiKeyStatement: GetUserByApiKeyStatement;
 
-const initializeDatabase = () => {
+export const initializeDatabase = (): void => {
   currencyDatabase.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -79,40 +88,39 @@ const initializeDatabase = () => {
     SELECT request_count, is_weekend 
     FROM rate_limits 
     WHERE user_id = ? AND date = ?
-  `);
+  `) as GetCurrentUsageStatement;
 
   incrementRequestCountStatement = currencyDatabase.prepare(`
     UPDATE rate_limits 
     SET request_count = request_count + 1, updated_at = CURRENT_TIMESTAMP
     WHERE user_id = ? AND date = ?
-  `);
+  `) as IncrementRequestCountStatement;
 
   createNewDayRecordStatement = currencyDatabase.prepare(`
     INSERT INTO rate_limits (user_id, date, request_count, is_weekend) 
     VALUES (?, ?, 1, ?)
-  `);
+  `) as CreateNewDayRecordStatement;
 
   logRequestStatement = currencyDatabase.prepare(`
     INSERT INTO requests (user_id, from_currency, to_currency, amount, converted_amount, exchange_rate, response_body)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
+  `) as LogRequestStatement;
 
   getUserByApiKeyStatement = currencyDatabase.prepare(`
     SELECT id, name, email, is_active FROM users WHERE api_key = ?
-  `);
+  `) as GetUserByApiKeyStatement;
 };
 
-import { getRateLimits } from './config/environment.js';
 
-const checkAndIncrementRateLimit = currencyDatabase.transaction(
-  (authenticatedUserId, currentDateUTC, isWeekendDay) => {
+export const checkAndIncrementRateLimit = currencyDatabase.transaction(
+  (authenticatedUserId: string, currentDateUTC: string, isWeekendDay: boolean): RateLimitResult => {
     const rateLimits = getRateLimits();
     const dailyRequestLimit = isWeekendDay ? rateLimits.weekend : rateLimits.weekday;
 
     const currentUsageRecord = getCurrentUsageStatement.get(
       authenticatedUserId,
       currentDateUTC
-    );
+    ) as { request_count: number; is_weekend: number } | undefined;
 
     if (!currentUsageRecord) {
       createNewDayRecordStatement.run(
@@ -137,8 +145,6 @@ const checkAndIncrementRateLimit = currencyDatabase.transaction(
 
 export {
   currencyDatabase,
-  initializeDatabase,
-  checkAndIncrementRateLimit,
   logRequestStatement,
   getUserByApiKeyStatement,
 };

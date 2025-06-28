@@ -1,12 +1,14 @@
 import Database from 'better-sqlite3';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
+import { describe, beforeAll, afterAll, test, expect } from 'vitest';
+import { testUser } from '../lib/const.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 describe('Database Operations', () => {
-  let testDb;
+  let testDb: Database.Database;
   
   beforeAll(() => {
     // Create in-memory test database
@@ -51,7 +53,7 @@ describe('Database Operations', () => {
     testDb.prepare(`
       INSERT INTO users (id, name, email, api_key) 
       VALUES (?, ?, ?, ?)
-    `).run('test-user-id', 'Test User', 'test@example.com', '550e8400-e29b-41d4-a716-446655440000');
+    `).run(testUser.userId, testUser.name, testUser.email, testUser.apiKey);
   });
   
   afterAll(() => {
@@ -61,11 +63,11 @@ describe('Database Operations', () => {
   describe('User Operations', () => {
     test('retrieves user by API key', () => {
       const getUserStmt = testDb.prepare('SELECT * FROM users WHERE api_key = ?');
-      const user = getUserStmt.get('550e8400-e29b-41d4-a716-446655440000');
+      const user = getUserStmt.get(testUser.apiKey) as any;
       
       expect(user).toBeDefined();
-      expect(user.id).toBe('test-user-id');
-      expect(user.name).toBe('Test User');
+      expect(user.id).toBe(testUser.userId);
+      expect(user.name).toBe(testUser.name);
       expect(user.is_active).toBe(1);
     });
 
@@ -85,7 +87,7 @@ describe('Database Operations', () => {
       `);
       
       const result = logStmt.run(
-        'test-user-id',
+        testUser.userId,
         'BTC',
         'USD',
         0.1,
@@ -100,7 +102,7 @@ describe('Database Operations', () => {
 
     test('retrieves logged requests', () => {
       const getRequestsStmt = testDb.prepare('SELECT * FROM requests WHERE user_id = ?');
-      const requests = getRequestsStmt.all('test-user-id');
+      const requests = getRequestsStmt.all(testUser.userId) as any[];
       
       expect(requests.length).toBeGreaterThan(0);
       expect(requests[0]).toHaveProperty('from_currency');
@@ -117,7 +119,7 @@ describe('Database Operations', () => {
         VALUES (?, ?, 1, ?)
       `);
       
-      const result = createStmt.run('test-user-id', '2024-01-15', 0); // Use 0 instead of false
+      const result = createStmt.run(testUser.userId, '2024-01-15', 0); // Use 0 instead of false
       
       expect(result.changes).toBe(1);
     });
@@ -129,7 +131,7 @@ describe('Database Operations', () => {
         WHERE user_id = ? AND date = ?
       `);
       
-      const result = incrementStmt.run('test-user-id', '2024-01-15');
+      const result = incrementStmt.run(testUser.userId, '2024-01-15');
       
       expect(result.changes).toBe(1);
     });
@@ -141,7 +143,7 @@ describe('Database Operations', () => {
         WHERE user_id = ? AND date = ?
       `);
       
-      const usage = getUsageStmt.get('test-user-id', '2024-01-15');
+      const usage = getUsageStmt.get(testUser.userId, '2024-01-15') as any;
       
       expect(usage).toBeDefined();
       expect(usage.request_count).toBe(2); // 1 initial + 1 increment

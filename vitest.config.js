@@ -5,19 +5,18 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     testMatch: [
-      '**/__tests__/**/*.js',
-      '**/?(*.)+(spec|test).js'
+      '**/src/__tests__/**/*.ts',
+      '**/src/**/?(*.)+(spec|test).ts'
     ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
       include: [
-        'server.js',
-        'services/**/*.js',
-        'middleware/**/*.js',
-        'database.js',
-        'routes/**/*.js',
-        'config/**/*.js'
+        'src/**/*.ts'
+      ],
+      exclude: [
+        'src/__tests__/**',
+        'src/types/**'
       ]
     }
   }

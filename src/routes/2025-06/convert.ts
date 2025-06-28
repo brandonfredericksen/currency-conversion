@@ -1,33 +1,37 @@
+import { Response } from 'express';
 import { convertCurrency } from '../../services/exchangeRates.js';
 import { getSupportedCurrencies } from '../../config/environment.js';
+import { RateLimitedRequest, SupportedCurrency } from '../../types/index.js';
 
-const convertRoute = async (req, res) => {
+export const convertRoute = async (req: RateLimitedRequest, res: Response): Promise<void> => {
   try {
     const { from, to, amount } = req.query;
 
     if (!from || !to || !amount) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           code: "INVALID_PARAMETERS",
           message: "Missing required parameters: from, to, amount",
         },
       });
+      return;
     }
 
-    const numericAmount = parseFloat(amount);
+    const numericAmount = parseFloat(amount as string);
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           code: "INVALID_AMOUNT",
           message: "Amount must be a positive number",
         },
       });
+      return;
     }
 
-    const fromCurrency = from.toUpperCase();
-    const toCurrency = to.toUpperCase();
+    const fromCurrency = (from as string).toUpperCase() as SupportedCurrency;
+    const toCurrency = (to as string).toUpperCase() as SupportedCurrency;
 
     const conversionResult = await convertCurrency(
       fromCurrency,
@@ -50,27 +54,31 @@ const convertRoute = async (req, res) => {
   } catch (error) {
     console.error("Conversion error:", error);
 
-    if (error.message.includes("Unsupported currency")) {
-      return res.status(400).json({
+    if (error instanceof Error && error.message.includes("Unsupported currency")) {
+      res.status(400).json({
         success: false,
         error: {
           code: "UNSUPPORTED_CURRENCY",
           message: `Supported currencies: ${getSupportedCurrencies().join(', ')}`,
         },
       });
+      return;
     }
 
     if (
-      error.message.includes("Exchange rate not available") ||
-      error.message.includes("No exchange rate data")
+      error instanceof Error && (
+        error.message.includes("Exchange rate not available") ||
+        error.message.includes("No exchange rate data")
+      )
     ) {
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
         error: {
           code: "EXCHANGE_RATE_UNAVAILABLE",
           message: "Exchange rate service temporarily unavailable",
         },
       });
+      return;
     }
 
     res.status(500).json({
@@ -82,5 +90,3 @@ const convertRoute = async (req, res) => {
     });
   }
 };
-
-export { convertRoute };

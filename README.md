@@ -1,6 +1,6 @@
 # Currency Conversion Service
 
-A service for converting between fiat and cryptocurrency pairs. Built with Express, featuring real-time exchange rates, user authentication, rate limiting, and request logging.
+A TypeScript service for converting between fiat and cryptocurrency pairs. Built with Express, featuring real-time exchange rates, user authentication, rate limiting, and request logging.
 
 ## Features
 
@@ -27,7 +27,13 @@ cd currency-conversion
 # Install dependencies
 npm install
 
-# Start the development server
+# Build the TypeScript code
+npm run build
+
+# Start the production server
+npm start
+
+# Or run in development mode with hot reload
 npm run dev
 ```
 

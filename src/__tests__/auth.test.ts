@@ -1,5 +1,30 @@
 import request from "supertest";
+import { afterAll, describe, expect, test, vi } from 'vitest';
+import { testUser } from '../lib/const.js';
 import app from "../server.js";
+
+// Mock the database module
+vi.mock('../database.js', () => ({
+  getUserByApiKeyStatement: {
+    get: vi.fn((apiKey: string) => {
+      if (apiKey === testUser.apiKey) {
+        return {
+          id: testUser.userId,
+          name: testUser.name,
+          email: testUser.email,
+          is_active: 1
+        };
+      }
+      return undefined;
+    })
+  },
+  checkAndIncrementRateLimit: vi.fn(() => ({ allowed: true, currentCount: 1 })),
+  logRequestStatement: {
+    run: vi.fn()
+  },
+  currencyDatabase: {},
+  initializeDatabase: vi.fn()
+}));
 
 describe("Authentication", () => {
   afterAll(async () => {

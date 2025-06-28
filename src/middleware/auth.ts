@@ -1,61 +1,68 @@
+import { Response, NextFunction } from 'express';
 import { getUserByApiKeyStatement } from '../database.js';
+import { User, AuthenticatedRequest } from '../types/index.js';
 
-const authenticateUser = (req, res, next) => {
+export const authenticateUser = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'MISSING_AUTHORIZATION',
           message: 'Authorization header is required'
         }
       });
+      return;
     }
 
     if (!authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'INVALID_AUTH_FORMAT',
           message: 'Authorization header must start with "Bearer "'
         }
       });
+      return;
     }
 
     const apiKey = authHeader.replace('Bearer ', '');
 
     if (!apiKey || apiKey.trim() === '') {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'MISSING_API_KEY',
           message: 'API key is required'
         }
       });
+      return;
     }
 
-    const authenticatedUser = getUserByApiKeyStatement.get(apiKey);
+    const authenticatedUser = getUserByApiKeyStatement.get(apiKey) as User | undefined;
 
     if (!authenticatedUser) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'INVALID_API_KEY',
           message: 'Invalid API key'
         }
       });
+      return;
     }
 
     if (!authenticatedUser.is_active) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'USER_INACTIVE',
           message: 'User account is inactive'
         }
       });
+      return;
     }
 
     req.authenticatedUser = authenticatedUser;
@@ -72,5 +79,3 @@ const authenticateUser = (req, res, next) => {
     });
   }
 };
-
-export { authenticateUser };

@@ -1,9 +1,34 @@
 import request from 'supertest';
 import app from '../server.js';
 import { convertCurrency } from '../services/exchangeRates.js';
+import { afterAll, describe, expect, test, vi } from 'vitest';
+import { testUser } from '../lib/const.js';
+
+// Mock the database module
+vi.mock('../database.js', () => ({
+  getUserByApiKeyStatement: {
+    get: vi.fn((apiKey: string) => {
+      if (apiKey === testUser.apiKey) {
+        return {
+          id: testUser.userId,
+          name: testUser.name,
+          email: testUser.email,
+          is_active: 1
+        };
+      }
+      return undefined;
+    })
+  },
+  checkAndIncrementRateLimit: vi.fn(() => ({ allowed: true, currentCount: 1 })),
+  logRequestStatement: {
+    run: vi.fn()
+  },
+  currencyDatabase: {},
+  initializeDatabase: vi.fn()
+}));
 
 describe('Currency Conversion', () => {
-  const validHeaders = { 'Authorization': 'Bearer 550e8400-e29b-41d4-a716-446655440000' };
+  const validHeaders = { 'Authorization': `Bearer ${testUser.apiKey}` };
   
   afterAll(async () => {
     await new Promise(resolve => setTimeout(resolve, 100));

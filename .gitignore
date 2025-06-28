@@ -13,5 +13,8 @@ node_modules/
 # Temporary files
 coverage/
 
+# Build directories
+dist/
+
 # OS generated files
 .DS_Store

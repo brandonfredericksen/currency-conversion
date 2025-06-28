@@ -1,21 +1,28 @@
+import { Response, NextFunction } from "express";
 import { logRequestStatement } from "../database.js";
+import { RateLimitedRequest, ConversionResponse } from "../types/index.js";
 
-const requestLoggerMiddleware = (req, res, next) => {
+export const requestLoggerMiddleware = (req: RateLimitedRequest, res: Response, next: NextFunction): void => {
   const originalSend = res.send;
 
-  res.send = function (responseBody) {
+  res.send = function (responseBody: any): Response {
     try {
+      if (!req.authenticatedUser) {
+        console.log("Request logging skipped: No authenticated user");
+        return originalSend.call(this, responseBody);
+      }
+
       const authenticatedUserId = req.authenticatedUser.id;
       const { from, to, amount } = req.query;
 
-      let parsedResponse;
+      let parsedResponse: ConversionResponse;
       try {
         parsedResponse =
           typeof responseBody === "string"
             ? JSON.parse(responseBody)
             : responseBody;
       } catch (error) {
-        parsedResponse = { response: responseBody };
+        parsedResponse = { success: false, response: responseBody } as any;
       }
 
       if (parsedResponse.success && parsedResponse.data) {
@@ -48,5 +55,3 @@ const requestLoggerMiddleware = (req, res, next) => {
 
   next();
 };
-
-export { requestLoggerMiddleware };
