@@ -3,7 +3,7 @@ import app from '../server.js';
 import { convertCurrency } from '../services/exchangeRates.js';
 
 describe('Currency Conversion', () => {
-  const validHeaders = { 'Authorization': 'Bearer test-api-key-12345' };
+  const validHeaders = { 'Authorization': 'Bearer 550e8400-e29b-41d4-a716-446655440000' };
   
   afterAll(async () => {
     await new Promise(resolve => setTimeout(resolve, 100));

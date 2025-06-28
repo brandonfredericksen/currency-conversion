@@ -51,7 +51,7 @@ describe('Database Operations', () => {
     testDb.prepare(`
       INSERT INTO users (id, name, email, api_key) 
       VALUES (?, ?, ?, ?)
-    `).run('test-user-id', 'Test User', 'test@example.com', 'test-api-key');
+    `).run('test-user-id', 'Test User', 'test@example.com', '550e8400-e29b-41d4-a716-446655440000');
   });
   
   afterAll(() => {
@@ -61,7 +61,7 @@ describe('Database Operations', () => {
   describe('User Operations', () => {
     test('retrieves user by API key', () => {
       const getUserStmt = testDb.prepare('SELECT * FROM users WHERE api_key = ?');
-      const user = getUserStmt.get('test-api-key');
+      const user = getUserStmt.get('550e8400-e29b-41d4-a716-446655440000');
       
       expect(user).toBeDefined();
       expect(user.id).toBe('test-user-id');

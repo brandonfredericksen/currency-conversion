@@ -53,16 +53,23 @@ const initializeDatabase = () => {
     CREATE INDEX IF NOT EXISTS idx_rate_limits_date ON rate_limits(date);
   `);
 
-  const seedTestUser = currencyDatabase.prepare(`
+  const seedUser = currencyDatabase.prepare(`
     INSERT OR IGNORE INTO users (id, name, email, api_key) 
     VALUES (?, ?, ?, ?)
   `);
 
-  seedTestUser.run(
-    "dab458d6-8352-42e6-88a1-88acc76b4e43",
+  seedUser.run(
+    "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "Trunk Tools",
+    "api@trunktools.com",
+    "dab458d6-8352-42e6-88a1-88acc76b4e43"
+  );
+
+  seedUser.run(
+    "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
     "Test User",
     "test@example.com",
-    "test-api-key-12345"
+    "550e8400-e29b-41d4-a716-446655440000"
   );
 
   console.log("Database initialized successfully");

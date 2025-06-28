@@ -2,7 +2,7 @@ import request from "supertest";
 import app from "../server.js";
 
 describe("Rate Limiting", () => {
-  const validHeaders = { Authorization: "Bearer test-api-key-12345" };
+  const validHeaders = { Authorization: "Bearer 550e8400-e29b-41d4-a716-446655440000" };
 
   afterAll(async () => {
     await new Promise((resolve) => setTimeout(resolve, 100));

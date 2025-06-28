@@ -11,7 +11,7 @@ describe("Authentication", () => {
     test("accepts valid Bearer token", async () => {
       const response = await request(app)
         .get("/api/2025-06/convert?from=BTC&to=USD&amount=1")
-        .set("Authorization", "Bearer test-api-key-12345");
+        .set("Authorization", "Bearer 550e8400-e29b-41d4-a716-446655440000");
 
       expect(response.status).not.toBe(401);
     });

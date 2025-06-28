@@ -25,7 +25,7 @@ app.get(
   convertRoute
 );
 
-app.get("/health", (req, res) => {
+app.get("/health", (_, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
