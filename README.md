@@ -120,5 +120,5 @@ Authentication → Rate Limiting → Request Logging → Business Logic
 
 I included two essential security middleware packages:
 
-**Helmet** sets various HTTP headers to help protect against common vulnerabilities.
-**CORS** (Cross-Origin Resource Sharing) controls which domains can access the API.
+- **Helmet** sets various HTTP headers to help protect against common vulnerabilities.
+- **CORS** (Cross-Origin Resource Sharing) controls which domains can access the API.
